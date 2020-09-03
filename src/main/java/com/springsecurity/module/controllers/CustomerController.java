@@ -18,6 +18,7 @@ public class CustomerController {
     @Autowired
     public CustomerController(UserDAO userDAO, PasswordEncoder passwordEncoder) {
         this.userDAO = userDAO;
+        System.out.println();
         this.passwordEncoder = passwordEncoder;
     }
 
