@@ -2,17 +2,12 @@ package com.springsecurity.module.controllers;
 
 import com.springsecurity.module.dao.DishDAO;
 import com.springsecurity.module.dao.PhotoDAO;
-import com.springsecurity.module.dto.DishDTO;
 import com.springsecurity.module.models.Dish;
-import com.springsecurity.module.models.Photo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Optional;
-
 @RestController
-@CrossOrigin("*")
 @RequestMapping("api/dishes/")
 public class DishController {
     private PhotoDAO photoDAO;
@@ -26,35 +21,34 @@ public class DishController {
 
     @GetMapping("/")
     public String getPage() {
-        return "Hello it's the dish controller.";
+        return "api/dishes/";
     }
 
-    @PostMapping(path = "create", produces = "application/json")
-    public void createDish(@RequestBody DishDTO dishDTO) {
-        Dish newDish = new Dish(dishDTO.getName(), dishDTO.getDescription());
-        dishDAO.save(newDish);
-        List<String> photoPaths = dishDTO.getPhotoPaths();
-        photoPaths.forEach(photoPath -> photoDAO.save(new Photo(photoPath, newDish)));
-    }
-
-    @GetMapping(path = "read/{id}")
-    public String readDish(@PathVariable("id") Long id) {
-        Optional<Dish> dish = dishDAO.findById(id);
-        return dish.orElseThrow(() -> new NullPointerException("The dish is not founded")).toString();
-    }
-
-    @PutMapping(path = "update/{id}")
-    public void updateDish(@PathVariable("id") Long id, @RequestBody DishDTO dishDTO) {
-        Optional<Dish> dishToUpdate = dishDAO.findById(id);
-        Dish dish = dishToUpdate.orElseThrow(() -> new NullPointerException("The dish is not founded"));
-        dish.setName(dishDTO.getName());
-        dish.setDescription(dishDTO.getDescription());
+    @PostMapping(path = "create")
+    @PreAuthorize("hasAuthority('dish:write')")
+    public void createDish(@RequestBody Dish dish) {
         dishDAO.save(dish);
     }
 
+    @GetMapping(path = "read/{id}")
+    @PreAuthorize("hasAuthority('dish:read')")
+    public Dish readDish(@PathVariable("id") Long id) {
+        return dishDAO.findById(id).orElseThrow(() -> new NullPointerException(String.format("Dish %s is not found", id)));
+    }
+
+    @PutMapping(path = "update/{id}")
+    @PreAuthorize("hasAuthority('dish:write')")
+    public void updateDish(@PathVariable("id") Long id, @RequestBody Dish dish) {
+        Dish dishToUpdate = dishDAO.findById(id).orElseThrow(() -> new NullPointerException(String.format("Dish %s is not found", id)));
+        dishToUpdate.setName(dish.getName());
+        dishToUpdate.setDescription(dish.getDescription());
+        dishDAO.save(dishToUpdate);
+    }
+
     @DeleteMapping(path = "delete/{id}")
-    public String deleteDish(@PathVariable("id") Long id) {
-        return null;
+    @PreAuthorize("hasAuthority('dish:write')")
+    public void deleteDish(@PathVariable("id") Long id) {
+        dishDAO.deleteById(id);
     }
 
 }

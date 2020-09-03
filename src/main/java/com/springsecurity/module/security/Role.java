@@ -8,7 +8,8 @@ import java.util.stream.Collectors;
 
 public enum Role {
     ADMIN(Sets.newHashSet(Permissions.DISH_WRITE, Permissions.DISH_READ,
-            Permissions.CUSTOMER_WRITE, Permissions.CUSTOMER_READ)),
+            Permissions.CUSTOMER_WRITE, Permissions.CUSTOMER_READ,
+            Permissions.ORDER_WRITE, Permissions.ORDER_READ)),
     CUSTOMER(Sets.newHashSet(Permissions.DISH_READ,
             Permissions.CUSTOMER_WRITE, Permissions.CUSTOMER_READ,
             Permissions.ORDER_WRITE, Permissions.ORDER_READ));

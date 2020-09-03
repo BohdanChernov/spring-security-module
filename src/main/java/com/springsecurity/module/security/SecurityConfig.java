@@ -1,67 +1,82 @@
 package com.springsecurity.module.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 
-import static com.springsecurity.module.security.Role.ADMIN;
-import static com.springsecurity.module.security.Role.CUSTOMER;
+import javax.servlet.http.HttpServletRequest;
+import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+    private PasswordEncoder passwordEncoder;
+    private UserDetailsService userDetailsService;
+
     @Autowired
-    PasswordEncoder passwordEncoder;
+    public SecurityConfig(PasswordEncoder passwordEncoder,
+                          @Qualifier("userDetailsServiceImpl") UserDetailsService userDetailsService) {
+        this.passwordEncoder = passwordEncoder;
+        this.userDetailsService = userDetailsService;
+    }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                .csrf().disable()
+//                .csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+//                .and()
+
+//                .csrf().disable()
+
                 .authorizeRequests()
                 .antMatchers("/", "/css/*", "/js/*").permitAll()
-
-//                .antMatchers("/api/dishes/**").hasRole(CUSTOMER.name())
-//                .antMatchers("/api/customers/**").hasRole(CUSTOMER.name())
-
-//                .antMatchers("/api/orders/**").hasAnyAuthority(Permissions.ORDER_WRITE.getPermission())
-//                .antMatchers("/api/orders/**").hasAnyRole(CUSTOMER.name(), ADMIN.name())
-
-
                 .anyRequest()
                 .authenticated()
                 .and()
-                .httpBasic();
+//                .httpBasic();
+                .formLogin().and()
+                .cors().configurationSource(corsConfigurationSource());
+    }
+
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) {
+        auth.authenticationProvider(daoAuthenticationProvider());
     }
 
     @Bean
-    @Override
-    protected UserDetailsService userDetailsService() {
-
-        UserDetails admin = User.builder()
-                .username("admin")
-                .password(passwordEncoder.encode("admin"))
-//                .roles(ADMIN.name())
-                .authorities(ADMIN.getGrantedAuthorities())
-                .build();
-
-        UserDetails user = User.builder()
-                .username("user")
-                .password(passwordEncoder.encode("user"))
-//                .roles(CUSTOMER.name())
-                .authorities(CUSTOMER.getGrantedAuthorities())
-                .build();
-
-        return new InMemoryUserDetailsManager(
-                admin,
-                user
-        );
+    public DaoAuthenticationProvider daoAuthenticationProvider() {
+        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
+        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder);
+        daoAuthenticationProvider.setUserDetailsService(userDetailsService);
+        return daoAuthenticationProvider;
     }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        return httpServletRequest -> {
+            CorsConfiguration corsConfiguration = new CorsConfiguration();
+            corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
+//                corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
+            corsConfiguration.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));
+            corsConfiguration.setAllowCredentials(true);
+
+            return corsConfiguration;
+        };
+
+    }
+
+
 }

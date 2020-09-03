@@ -1,36 +1,60 @@
 package com.springsecurity.module.controllers;
 
-import com.springsecurity.module.models.Customer;
-import com.springsecurity.module.models.FoodOrder;
+import com.springsecurity.module.dao.UserDAO;
+import com.springsecurity.module.models.UserImpl;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@CrossOrigin("*")
 @RequestMapping("api/customers/")
 public class CustomerController {
+    private UserDAO userDAO;
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    public CustomerController(UserDAO userDAO, PasswordEncoder passwordEncoder) {
+        this.userDAO = userDAO;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @GetMapping("/")
     public String getPage() {
-        return null;
+        return "api/customers/";
     }
 
     @PostMapping("register")
-    public String registerCustomer(@RequestBody FoodOrder foodOrder) {
-        return null;
+    @PreAuthorize("hasAuthority('customer:write')")
+    public void registerCustomer(@RequestBody UserImpl userImpl) {
+        userImpl.setPassword(passwordEncoder.encode(userImpl.getPassword()));
+        userDAO.save(userImpl);
     }
 
     @GetMapping(path = "read/{id}")
-    public String readCustomer(@PathVariable("id") Long id) {
-        return null;
+    @ResponseBody
+    @PreAuthorize("hasAuthority('customer:read')")
+    public UserImpl readCustomer(@PathVariable("id") Long id) {
+        return userDAO.findById(id).orElseThrow(() -> new UsernameNotFoundException(String.format("User %s is not found", id)));
     }
 
     @PutMapping(path = "update/{id}")
-    public String updateCustomer(@PathVariable("id") Long id, @RequestBody Customer customer) {
-        return null;
+    @PreAuthorize("hasAuthority('customer:write')")
+    public void updateCustomer(@PathVariable("id") Long id, @RequestBody UserImpl userImpl) {
+        UserImpl user = userDAO.findById(id).orElseThrow(() -> new UsernameNotFoundException(String.format("User %s is not found", id)));
+        user.setName(userImpl.getName());
+        user.setLastName(userImpl.getLastName());
+        user.setPhoneNumber(userImpl.getPhoneNumber());
+        user.setEmail(userImpl.getEmail());
+        user.setPassword(passwordEncoder.encode(userImpl.getPassword()));
+        userDAO.save(user);
     }
 
     @DeleteMapping(path = "delete/{id}")
-    public String deleteCustomer(@PathVariable("id") Long id) {
-        return null;
+    @PreAuthorize("hasAuthority('customer:write')")
+    public void deleteCustomer(@PathVariable("id") Long id) {
+        userDAO.deleteById(id);
     }
 }

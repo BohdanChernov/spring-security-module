@@ -3,7 +3,6 @@ package com.springsecurity.module.models;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import javax.persistence.*;
 import java.util.List;
@@ -24,14 +23,5 @@ public class Dish {
     public Dish(String name, String description) {
         this.name = name;
         this.description = description;
-    }
-
-    @Override
-    public String toString() {
-        return "Dish{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                '}';
     }
 }

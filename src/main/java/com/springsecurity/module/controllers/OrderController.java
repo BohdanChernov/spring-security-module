@@ -7,7 +7,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@CrossOrigin("*")
 @RequestMapping("api/orders/")
 public class OrderController {
     private FoodOrderDAO foodOrderDAO;
@@ -19,7 +18,7 @@ public class OrderController {
 
     @GetMapping("/")
     public String getPage() {
-        return null;
+        return "api/orders/";
     }
 
     @PostMapping("create")
@@ -30,20 +29,22 @@ public class OrderController {
 
     @GetMapping(path = "read/{id}")
     @PreAuthorize("hasAuthority('order:read')")
-    public String readOrder(@PathVariable("id") Long id) {
-        return foodOrderDAO.findById(id).get().toString();
+    public FoodOrder readOrder(@PathVariable("id") Long id) {
+        return foodOrderDAO.findById(id).orElseThrow(() -> new NullPointerException(String.format("Order %s is not found", id)));
     }
 
     @PutMapping(path = "update/{id}")
     @PreAuthorize("hasAuthority('order:write')")
-    public String updateOrder(@PathVariable("id") Long id, @RequestBody FoodOrder foodOrder) {
-        return null;
+    public void updateOrder(@PathVariable("id") Long id, @RequestBody FoodOrder foodOrder) {
+        FoodOrder foodOrderToUpdate = foodOrderDAO.findById(id).orElseThrow(() -> new NullPointerException(String.format("Order %s is not found", id)));
+        foodOrderToUpdate.setName(foodOrder.getName());
+        foodOrderDAO.save(foodOrderToUpdate);
     }
 
     @DeleteMapping(path = "delete/{id}")
     @PreAuthorize("hasAuthority('order:write')")
-    public String deleteOrder(@PathVariable("id") Long id) {
-        return null;
+    public void deleteOrder(@PathVariable("id") Long id) {
+        foodOrderDAO.deleteById(id);
     }
 
 }

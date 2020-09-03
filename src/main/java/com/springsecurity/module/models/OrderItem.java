@@ -1,5 +1,6 @@
 package com.springsecurity.module.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,7 +12,6 @@ import javax.persistence.*;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString
 public class OrderItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,5 +20,6 @@ public class OrderItem {
     private Dish dish;
     private Integer quantity;
     @ManyToOne
+    @JsonIgnore
     private FoodOrder foodOrder;
 }
